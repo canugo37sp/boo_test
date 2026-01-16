@@ -1,0 +1,28 @@
+name: Sparrow SAST (Locate Everything)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sast:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: System Info
+        run: |
+          echo "Current User: $(whoami)"
+          echo "Current Directory: $(pwd)"
+
+      - name: Find Any Sparrow Files
+        shell: bash
+        run: |
+          echo "=== Searching for anything named 'sparrow' ==="
+          # 이름에 'sparrow'가 들어간 모든 폴더와 파일을 다 찾습니다.
+          # /app 뿐만 아니라 /opt, /home, /usr 등 모든 곳을 뒤집니다.
+          find / -name "*sparrow*" 2>/dev/null || true
+          
+          echo "=== Checking specific known paths ==="
+          ls -R /app 2>/dev/null || echo "/app directory not found"
