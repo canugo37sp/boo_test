@@ -8,9 +8,10 @@ jobs:
     runs-on: [self-hosted, linux, x64]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Debug container & workspace
+      - name: Debug Environment
         shell: bash
         run: |
           echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
@@ -20,7 +21,52 @@ jobs:
       - name: Find Sparrow CLI
         shell: bash
         run: |
-          echo "=== /app tree ==="
+          echo "=== Checking /app directory ==="
           ls -al /app || true
-          echo "=== find sparrow ==="
-          find /app -type f | grep -i sparrow || true
+          echo "=== Searching for sparrow-cli file ==="
+          # This will help you find the exact path if it's not where we expect
+          find /app -name "sparrow-cli" 2>/dev/null || true
+
+      - name: Run Sparrow
+        shell: bash
+        run: |
+          # 1. Define the path (Update this based on 'Find Sparrow CLI' output)
+          CLI_PATH="/app/sparrow/sparrow-enterprise-client/bin/sparrow-cli"
+
+          # 2. Check if the file exists before running
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "Error: Sparrow CLI not found at $CLI_PATH"
+            echo "Please check the 'Find Sparrow CLI' step logs to find the correct path."
+            exit 1
+          fi
+
+          # 3. Setup Workspace and Config Files
+          WS="${GITHUB_WORKSPACE}"
+          PASSWORD_FILE="${WS}/password.txt"
+          ANALYSIS_FILE="${WS}/analysis.json"
+
+          echo -n "YOUR_PASSWORD" > "$PASSWORD_FILE"
+
+          cat <<EOF > "$ANALYSIS_FILE"
+          {
+            "type": "full",
+            "profile": "YOUR_PROFILE",
+            "targets": [
+              {
+                "type": "file",
+                "path": ["$WS"],
+                "extensions": ["*"],
+                "basePath": "$WS"
+              }
+            ]
+          }
+          EOF
+
+          # 4. Execute Sparrow
+          chmod +x "$CLI_PATH"
+          "$CLI_PATH" create analysis \
+            -k "YOUR_PROJECT_KEY" \
+            -f "$ANALYSIS_FILE" \
+            -s "YOUR_SERVER_URL" \
+            -u "YOUR_USERNAME" \
+            -p "$PASSWORD_FILE"
