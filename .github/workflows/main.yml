@@ -36,7 +36,7 @@ jobs:
           }
           EOF
 
-          CLI_PATH="/app/sparrow/bin/sparrow-cli"
+          CLI_PATH="/app/sparrow/sparrow-enterprise-client/bin/sparrow-cli"
           chmod +x "$CLI_PATH"
 
           "$CLI_PATH" create analysis \
