@@ -1,0 +1,62 @@
+name: Sparrow SAST
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sast:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Find Sparrow CLI (Deep Search)
+        shell: bash
+        run: |
+          echo "=== Searching for sparrow-cli in the whole system ==="
+          # /app 뿐만 아니라 전체 시스템에서 sparrow-cli라는 이름의 파일을 찾습니다.
+          # 찾은 경로가 로그에 출력됩니다.
+          find / -name "sparrow-cli" 2>/dev/null || true
+
+      - name: Run Sparrow
+        shell: bash
+        run: |
+          # 1. 여기서 'find' 명령어가 찾아낸 경로로 아래 CLI_PATH를 수정해야 합니다.
+          # 만약 find 결과가 '/opt/sparrow/bin/sparrow-cli' 라면 아래를 그렇게 고치세요.
+          CLI_PATH="/app/sparrow/sparrow-enterprise-client/bin/sparrow-cli"
+
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "Error: Sparrow CLI not found at $CLI_PATH"
+            echo "Look at the 'Find Sparrow CLI' step logs to see the actual path."
+            exit 1
+          fi
+
+          WS="${GITHUB_WORKSPACE}"
+          PASSWORD_FILE="${WS}/password.txt"
+          ANALYSIS_FILE="${WS}/analysis.json"
+
+          echo -n "YOUR_PASSWORD" > "$PASSWORD_FILE"
+
+          cat <<EOF > "$ANALYSIS_FILE"
+          {
+            "type": "full",
+            "profile": "YOUR_PROFILE",
+            "targets": [
+              {
+                "type": "file",
+                "path": ["$WS"],
+                "extensions": ["*"],
+                "basePath": "$WS"
+              }
+            ]
+          }
+          EOF
+
+          chmod +x "$CLI_PATH"
+          "$CLI_PATH" create analysis \
+            -k "YOUR_PROJECT_KEY" \
+            -f "$ANALYSIS_FILE" \
+            -s "YOUR_SERVER_URL" \
+            -u "YOUR_USERNAME" \
+            -p "$PASSWORD_FILE"
