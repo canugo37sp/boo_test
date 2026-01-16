@@ -14,6 +14,7 @@ jobs:
       - name: Run Sparrow SAST
         shell: bash
         run: |
+          set -x
           # 1. 경로 및 변수 설정
           WS="${GITHUB_WORKSPACE}"
           PASSWORD_FILE="${WS}/password.txt"
