@@ -21,7 +21,9 @@ jobs:
           ANALYSIS_FILE="${WS}/analysis.json"
           
           # 2. 비밀번호 파일 생성 (Secrets 사용)
-          echo -n "${{ secrets.SPARROW_PASSWORD }}" > "$PASSWORD_FILE"
+          echo -n "${{ secrets.SPARROW_PW }}" > "$PASSWORD_FILE"
+          echo -n "${{ secrets.SPARROW_PW }}" > "$PASSWORD_FILE"
+
 
           # 3. analysis.json 생성 (Heredoc 방식)
           cat <<EOF > "$ANALYSIS_FILE"
