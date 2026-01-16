@@ -1,0 +1,69 @@
+name: Sparrow SAST (Combined Debug & Run)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sast:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Find Sparrow CLI
+        id: locate
+        shell: bash
+        run: |
+          echo "=== Searching for sparrow-cli executable ==="
+          # 시스템 전체에서 sparrow-cli라는 이름의 실행 파일을 찾습니다.
+          ACTUAL_PATH=$(find / -type f -name "sparrow-cli" -executable 2>/dev/null | head -n 1)
+          
+          if [ -z "$ACTUAL_PATH" ]; then
+            echo "❌ ERROR: sparrow-cli not found anywhere on this runner."
+            exit 1
+          else
+            echo "✅ Found sparrow-cli at: $ACTUAL_PATH"
+            # 찾은 경로를 다음 단계에서 쓸 수 있도록 저장합니다.
+            echo "SPARROW_PATH=$ACTUAL_PATH" >> $GITHUB_ENV
+          fi
+
+      - name: Run Sparrow Analysis
+        shell: bash
+        run: |
+          # 위 단계에서 찾은 경로를 자동으로 사용합니다.
+          CLI_PATH="${{ env.SPARROW_PATH }}"
+          
+          echo "Using CLI Path: $CLI_PATH"
+
+          # 환경 설정
+          WS="${GITHUB_WORKSPACE}"
+          PASSWORD_FILE="${WS}/password.txt"
+          ANALYSIS_FILE="${WS}/analysis.json"
+
+          # 인증 정보 (실제 값으로 수정 필요)
+          echo -n "YOUR_PASSWORD" > "$PASSWORD_FILE"
+
+          cat <<EOF > "$ANALYSIS_FILE"
+          {
+            "type": "full",
+            "profile": "YOUR_PROFILE",
+            "targets": [
+              {
+                "type": "file",
+                "path": ["$WS"],
+                "extensions": ["*"],
+                "basePath": "$WS"
+              }
+            ]
+          }
+          EOF
+
+          # 실행 권한 부여 및 분석 시작
+          chmod +x "$CLI_PATH"
+          "$CLI_PATH" create analysis \
+            -k "YOUR_PROJECT_KEY" \
+            -f "$ANALYSIS_FILE" \
+            -s "YOUR_SERVER_URL" \
+            -u "YOUR_USERNAME" \
+            -p "$PASSWORD_FILE"
