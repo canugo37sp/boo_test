@@ -46,7 +46,7 @@ jobs:
           
           # 실행 권한 확인/부여
           chmod +x "$CLI_PATH"
-          cat "$PASSWORD_FILE"
+          cat -A "$PASSWORD_FILE"
 
           # 5. CLI 실행
           "$CLI_PATH" create analysis \
