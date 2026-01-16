@@ -1,8 +1,6 @@
-name: Sparrow SAST
+name: Sparrow SAST (Debug)
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -12,42 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug container & workspace
+        shell: bash
+        run: |
+          echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
+          pwd
+          ls -al
+
       - name: Find Sparrow CLI
         shell: bash
         run: |
-          echo "=== /app/sparrow tree ==="
-          find /app/sparrow -maxdepth 4 -type f
-
-      - name: Run Sparrow SAST
-        shell: bash
-        run: |
-          WS="${GITHUB_WORKSPACE}"
-          PASSWORD_FILE="${WS}/password.txt"
-          ANALYSIS_FILE="${WS}/analysis.json"
-
-          echo -n "${{ secrets.SPARROW_PASSWORD }}" > "$PASSWORD_FILE"
-
-          cat <<EOF > "$ANALYSIS_FILE"
-          {
-            "type": "full",
-            "profile": "${{ secrets.SPARROW_PROFILE }}",
-            "targets": [
-              {
-                "type": "file",
-                "path": ["$WS"],
-                "extensions": ["*"],
-                "basePath": "$WS"
-              }
-            ]
-          }
-          EOF
-
-          CLI_PATH="/app/sparrow/sparrow-enterprise-client/bin/sparrow-cli"
-          chmod +x "$CLI_PATH"
-
-          "$CLI_PATH" create analysis \
-            -k "${{ secrets.SPARROW_PROJECT_KEY }}" \
-            -f "$ANALYSIS_FILE" \
-            -s "${{ secrets.SPARROW_SERVER_URL }}" \
-            -u "${{ secrets.SPARROW_USER }}" \
-            -p "$PASSWORD_FILE"
+          echo "=== /app tree ==="
+          ls -al /app || true
+          echo "=== find sparrow ==="
+          find /app -type f | grep -i sparrow || true
