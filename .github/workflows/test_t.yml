@@ -1,0 +1,55 @@
+name: Sparrow SAST_
+
+on:
+  workflow_dispatch: # 수동 실행을 위해 추가 (필요에 따라 push 등으로 변경 가능)
+
+jobs:
+  sast:
+    # Linux용 Self-hosted Runner 라벨
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Sparrow SAST
+        shell: bash
+        run: |
+          # 1. 경로 및 변수 설정
+          WS="${GITHUB_WORKSPACE}"
+          PASSWORD_FILE="${WS}/password.txt"
+          ANALYSIS_FILE="${WS}/analysis.json"
+          
+          # 2. 비밀번호 파일 생성 (Secrets 사용)
+          echo -n "${{ secrets.SPARROW_PASSWORD }}" > "$PASSWORD_FILE"
+
+          # 3. analysis.json 생성 (Heredoc 방식)
+          cat <<EOF > "$ANALYSIS_FILE"
+          {
+            "type": "full",
+            "profile": "${{ secrets.SPARROW_PROFILE }}",
+            "targets": [
+              {
+                "type": "file",
+                "path": ["$WS"],
+                "extensions": ["*"],
+                "basePath": "$WS"
+              }
+            ]
+          }
+          EOF
+
+          # 4. Sparrow CLI 경로 설정 (로그에서 확인된 실제 경로로 수정됨)
+          # 이전: /opt/sparrow-client/bin/sparrow-cli
+          # 현재: /app/sparrow/sparrow-cli
+          CLI_PATH="/app/sparrow/sparrow-cli"
+          
+          # 실행 권한 확인/부여
+          chmod +x "$CLI_PATH"
+
+          # 5. CLI 실행
+          "$CLI_PATH" create analysis \
+            -k "${{ secrets.SPARROW_PROJECT_KEY }}" \
+            -f "$ANALYSIS_FILE" \
+            -s "${{ secrets.SPARROW_SERVER_URL }}" \
+            -u "${{ secrets.SPARROW_USER }}" \
+            -p "$PASSWORD_FILE"
