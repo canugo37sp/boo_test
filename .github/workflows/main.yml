@@ -36,7 +36,7 @@ jobs:
           }
           EOF
 
-          CLI_PATH="/opt/sparrow-client/bin/sparrow-cli"
+          CLI_PATH="/home/sparrow/boo/lamda"
           chmod +x "$CLI_PATH"
 
           "$CLI_PATH" create analysis \
