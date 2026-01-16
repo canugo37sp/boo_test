@@ -1,8 +1,12 @@
 name: Sparrow SAST
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
 jobs:
   sast:
-    # Linux용 Self-hosted Runner 라벨로 변경
     runs-on: [self-hosted, linux, x64]
 
     steps:
@@ -11,15 +15,12 @@ jobs:
       - name: Run Sparrow SAST
         shell: bash
         run: |
-          # 1. 경로 및 변수 설정
           WS="${GITHUB_WORKSPACE}"
           PASSWORD_FILE="${WS}/password.txt"
           ANALYSIS_FILE="${WS}/analysis.json"
-          
-          # 2. 비밀번호 파일 생성 (개행 없이 저장)
+
           echo -n "${{ secrets.SPARROW_PASSWORD }}" > "$PASSWORD_FILE"
 
-          # 3. analysis.json 생성 (Heredoc 방식)
           cat <<EOF > "$ANALYSIS_FILE"
           {
             "type": "full",
@@ -35,14 +36,9 @@ jobs:
           }
           EOF
 
-          # 4. Sparrow CLI 경로 설정 (리눅스용 설치 경로로 수정 필요)
-          # 예: /home/user/sparrow/bin/sparrow-cli
           CLI_PATH="/opt/sparrow-client/bin/sparrow-cli"
-          
-          # 실행 권한 확인/부여
           chmod +x "$CLI_PATH"
 
-          # 5. CLI 실행
           "$CLI_PATH" create analysis \
             -k "${{ secrets.SPARROW_PROJECT_KEY }}" \
             -f "$ANALYSIS_FILE" \
