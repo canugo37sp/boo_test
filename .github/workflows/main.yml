@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Find Sparrow CLI
+        shell: bash
+        run: |
+          echo "=== /app/sparrow tree ==="
+          find /app/sparrow -maxdepth 4 -type f
+
       - name: Run Sparrow SAST
         shell: bash
         run: |
